@@ -14,19 +14,116 @@
 繋ぐ。「先週の食費は 8,400 円で、葉酸は目標の 7 割だった」が1画面で分かる状態を
 目指す。
 
-## 状態
+## 今できること
 
-**設計中。** 実装はまだ入っていない。
-
-設計は [`docs/DESIGN.md`](docs/DESIGN.md) にある。読む順は、
-「何を作るか」→「データの持ち方」→「難しいところ」。
-最後の章が一番中身がある。
-
-## 構成（予定）
+**Phase 1（記録と見返し）まで。** チラシの取り込みはまだ無い。
 
 | | |
 |---|---|
-| Next.js (App Router) | 画面と API |
-| Supabase | Postgres・Auth・Storage |
-| Claude API (`claude-opus-5`) | チラシ画像から商品と価格を読み取る |
-| Vercel | デプロイ先 |
+| `/login` | メールにリンクが届く。パスワードは持たない |
+| `/onboarding` | 所帯を作るか、相手の合い言葉で入る |
+| `/` | 1日の記録。合計・PFCの熱量比・目標との差。`?day=` で行き来する |
+| `/record` | 食べたものを1件記録する。**料理名だけ必須** |
+| `/settings` | 目標カロリーとたんぱく質の下限、所帯の合い言葉 |
+
+設計の全体像は [`docs/DESIGN.md`](docs/DESIGN.md)。Phase 2 以降（チラシの
+読み取り、食材との紐づけ、献立の提案）はそちらにある。
+
+### 所帯という単位
+
+記録は**所帯**で共有し、目標値は**人ごと**に持つ。夫婦2人で同じ食卓を囲むので
+「わが家が今日食べたもの」は1つでよいが、「1日 2200 kcal」は人によって違う。
+
+相手を呼ぶのは 8 文字の合い言葉（`/settings` に出ている）。所帯の id を
+そのまま渡す形にすると、チャットに貼ったものがそのまま鍵になってしまう。
+
+## 動かす
+
+```sh
+npm install
+cp .env.example .env.local     # Supabase の URL と anon キーを入れる
+npm run dev
+```
+
+Supabase 側は、プロジェクトを作って `supabase/migrations/` を流すだけ。
+
+```sh
+supabase link --project-ref <project-ref>
+supabase db push
+```
+
+`.env.local` に入れる2つは、どちらもブラウザに出る前提の**公開値**。
+秘密にすることで守るものではない（次の節）。
+
+| 変数 | | 既定 |
+|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase の URL | 必須 |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon キー | 必須 |
+| `COMODY_TIMEZONE` | 「今日」と入力した時刻の解釈 | `Asia/Tokyo` |
+
+**サービスロールのキーは使わない。** あれは RLS を全部素通りするので、
+1か所でも取り違えると所帯の仕切りが消える。
+
+## 守り方
+
+**行を絞っているのは RLS だけ。** アプリのコードは権限判定をしない。
+
+Supabase は `public` スキーマのテーブルを PostgREST で自動的に REST API として
+公開する。anon キーはブラウザに埋め込む前提の公開キーなので、秘密にすることでは
+守れない。テーブルを作った時点で、キーを知っていれば誰でも読み書きできる状態に
+なる。だから防御は最初から RLS に置き、アプリ側は「絞られた結果」を並べるだけに
+してある。
+
+そこが本当に効いているかは、独立して試せる。
+
+```sh
+createdb comody_test
+PGDATABASE=comody_test ./supabase/tests/rls.sh
+```
+
+他所帯への書き込み、`created_by` の偽装、他所帯の記録の書き換え、
+`household_members` への直接の追加、他人の設定の読み出し、ログイン前の読み出し、
+違う合い言葉での参加 — を攻撃側から試して、全部止まることを確かめる。
+
+## テスト
+
+```sh
+npm test
+```
+
+`lib/` のうち DB にも React にも依存しない部分（日付計算・記録1件の組み立て・
+合計と目標）を Node の標準テストランナーで動かす。TypeScript は Node が
+そのまま読むので、ビルドは要らない。
+
+そのために `lib/` の中の相対 import は `./day.ts` のように拡張子を付けている。
+Node の ESM は拡張子を補完しないため。
+
+## 気を付けること
+
+**「今日」はサーバの時計では決まらない。** Vercel は UTC で動くので、
+`COMODY_TIMEZONE` を設定しないと日本時間の朝9時まで「今日」が前日になり、
+`19:30` と入れた夕食が翌朝 `4:30` として保存される。日付は `day` 列に別で
+持っているので、ずれるのは時刻だけ — つまり気付きにくい。
+
+**画面にクライアント JavaScript を置いていない。** 素の `<form>` から
+`/api/*` に POST する。認可を proxy の挙動に頼らず、各ルートの中で
+自分で確かめられるようにするため。
+
+**`/api/*` は `proxy.ts` の対象外。** ここのリダイレクトは 307 で POST が
+POST のまま飛ぶので、`/api` を捕まえると期限切れの記録が `/login` に
+POST されることになる。API 側は自分で `getUser()` を見て 303 で送り返す。
+
+## 構成
+
+```
+supabase/migrations/    テーブル・RLS・所帯を作る関数
+supabase/tests/rls.sh   RLS を攻撃側から試す
+lib/day.ts              'YYYY-MM-DD' の日付計算
+lib/meal.ts             記録1件の組み立て。壁時計→瞬間の変換もここ
+lib/totals.ts           合計と目標の比べ方
+lib/household.ts        「今誰で、どの所帯か」を1か所で解く
+lib/supabase/server.ts  セッションを積んだクライアント
+proxy.ts                画面の入口。セッションの更新もここでする
+app/                    画面と API
+test/                   lib/ の純粋関数のテスト
+```

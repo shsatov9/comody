@@ -1,0 +1,154 @@
+/* 明るい側を基準に組み、暗い側はトークンだけ差し替える。 */
+:root {
+  --bg: #ffffff;
+  --fg: #1f2328;
+  --muted: #6b7280;
+  --line: #e5e7eb;
+  --accent: #2f7d4f;
+  --accent-weak: #eaf4ee;
+  --over: #c0392b;
+  --ok: #4b7f52;
+  --p: #3f7fbf;
+  --f: #d9a441;
+  --c: #6aa77f;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1f24;
+    --fg: #e8eaed;
+    --muted: #9aa3af;
+    --line: #343a42;
+    --accent: #6bbd8a;
+    --accent-weak: #1d2a22;
+    --over: #e2705f;
+    --ok: #7fb185;
+    --p: #6aa5dd;
+    --f: #e5b968;
+    --c: #86bd9a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--fg);
+  font: 14px/1.6 -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic UI",
+        "Noto Sans JP", Meiryo, sans-serif;
+  font-feature-settings: "palt";
+}
+
+main { max-width: 640px; margin: 0 auto; padding: 28px 20px 64px; }
+main.narrow { max-width: 380px; }
+
+h1 { font-size: 18px; margin: 0 0 20px; }
+h2 {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  font-size: 14px; font-weight: 600; margin: 0 0 8px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--line);
+}
+h2 .sum { display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap;
+          font-weight: 500; color: var(--muted); font-variant-numeric: tabular-nums; }
+section { margin-bottom: 26px; }
+
+a { color: inherit; text-decoration-color: var(--line); text-underline-offset: 2px; }
+a:hover { text-decoration-color: var(--accent); }
+
+ul { list-style: none; margin: 0; padding: 0; }
+li { display: grid; grid-template-columns: 1fr auto auto; gap: 10px;
+     align-items: baseline; padding: 7px 0; }
+li + li { border-top: 1px solid var(--line); }
+ul.with-action li { grid-template-columns: 1fr auto auto; }
+
+.name { word-break: break-word; display: flex; flex-direction: column; gap: 2px; }
+.kcal { font-variant-numeric: tabular-nums; text-align: right; min-width: 78px; }
+.sub { display: block; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.empty { color: var(--muted); }
+.hint { font-size: 12px; color: var(--muted); }
+.note { font-size: 11px; color: var(--muted); }
+
+.warn, .notice {
+  font-size: 13px; border: 1px solid var(--line); border-radius: 8px;
+  padding: 8px 10px; margin: 0 0 16px;
+}
+.warn { color: var(--over); }
+.notice { color: var(--ok); }
+
+.verdict { font-size: 11px; padding: 1px 6px; border-radius: 999px;
+           background: var(--accent-weak); color: var(--accent); }
+.verdict.ok { background: transparent; color: var(--ok); }
+.verdict.over { background: transparent; color: var(--over); font-weight: 600; }
+
+/* ── ナビ ────────────────────────────────────────────────── */
+.nav { display: flex; justify-content: space-between; align-items: center;
+       gap: 12px; font-size: 13px; margin-bottom: 20px; }
+.nav-links { display: flex; gap: 14px; }
+.nav a[aria-current="page"] { color: var(--accent); font-weight: 600; }
+.nav a.add { color: var(--accent); }
+.logout button { font: inherit; font-size: 12px; color: var(--muted);
+                 background: none; border: 0; padding: 0; cursor: pointer; }
+.logout button:hover { color: var(--fg); }
+
+/* ── 日の行き来 ──────────────────────────────────────────── */
+.period-row { display: flex; align-items: center; gap: 12px;
+              flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; }
+.step { color: var(--muted); }
+.step.disabled { opacity: 0.4; }
+
+/* ── 合計 ────────────────────────────────────────────────── */
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(104px, 1fr));
+           gap: 10px 16px; margin: 12px 0; }
+.figures div { display: flex; flex-direction: column; gap: 2px; }
+.figures dt { font-size: 11px; color: var(--muted); }
+.figures dd { margin: 0; font-size: 15px; font-variant-numeric: tabular-nums; }
+
+.pfc-bar { width: 100%; height: 10px; border-radius: 5px; overflow: hidden;
+           display: block; margin: 4px 0 6px; background: var(--accent-weak); }
+.pfc-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px;
+              color: var(--muted); }
+.pfc-legend li { display: flex; align-items: center; gap: 5px; padding: 0; border: 0; }
+.swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.pfc-p { fill: var(--p); background: var(--p); }
+.pfc-f { fill: var(--f); background: var(--f); }
+.pfc-c { fill: var(--c); background: var(--c); }
+
+/* ── 入力 ────────────────────────────────────────────────── */
+.entry-form { display: flex; flex-direction: column; gap: 6px; margin: 16px 0 8px; }
+.entry-form label { font-size: 12px; color: var(--muted); }
+.entry-form input, .entry-form button, .entry-form select {
+  font: inherit; padding: 8px 10px; border-radius: 8px;
+  border: 1px solid var(--line); background: var(--bg); color: var(--fg);
+  /* iOS は 16px 未満の入力欄で勝手に拡大する。スマホから打つのが主なので抑える。 */
+  font-size: 16px; width: 100%;
+}
+.entry-form input::placeholder { color: var(--muted); opacity: 0.7; }
+.entry-form button {
+  background: var(--accent); color: #fff; border-color: transparent;
+  cursor: pointer; margin-top: 14px; padding: 12px;
+}
+.entry-form button[disabled] { opacity: 0.5; cursor: default; }
+.entry-form .when { display: flex; gap: 8px; }
+.entry-form .when > div { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.entry-form details { margin-top: 10px; }
+.entry-form summary { font-size: 12px; color: var(--muted); cursor: pointer; }
+.entry-form .macros { display: grid; grid-template-columns: repeat(2, 1fr);
+                      gap: 8px; margin-top: 10px; }
+.entry-form .macros > div { display: flex; flex-direction: column; gap: 4px; }
+.entry-form .check { display: flex; flex-direction: row; align-items: center;
+                     gap: 8px; margin-top: 6px; }
+.entry-form .check input { width: auto; }
+.entry-form .check label { font-size: 14px; color: var(--fg); }
+
+.row-action { min-width: 34px; text-align: right; }
+.row-action form { display: inline; }
+.row-action button {
+  font: inherit; font-size: 11px; padding: 2px 6px; border-radius: 6px;
+  border: 1px solid var(--line); background: transparent; color: var(--muted);
+  cursor: pointer;
+}
+.row-action button:hover { color: var(--over); border-color: var(--over); }
+
+.code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        font-size: 18px; letter-spacing: 2px; }
