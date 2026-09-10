@@ -30,3 +30,8 @@ end $$;
 
 grant usage on schema public, auth to anon, authenticated;
 grant select on auth.users to authenticated;
+
+-- Supabase は public スキーマの既定権限として、あとから作られた関数の execute を
+-- anon / authenticated にも与える。これを再現しないと、権限の試験が本番より甘くなる
+-- （PUBLIC の分だけ外せば通ってしまい、本番では anon が呼べるままになる）。
+alter default privileges in schema public grant execute on functions to anon, authenticated;

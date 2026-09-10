@@ -86,6 +86,17 @@ check "anon は meals を読めない" "ERROR" \
 check "anon は households を読めない" "ERROR" \
   "$(anon_sql "select count(*) from public.households;" | grep -o ERROR | first)"
 
+# 関数は PUBLIC に execute が付いた状態で生まれる。ロールを名指しした revoke では
+# それが外れない。実行してみても auth.uid() が null で落ちるだけなので、エラーの
+# 有無では「取り上げられているか」を見分けられない。権限そのものを見る。
+for fn in 'create_household(text)' 'join_household(text)' 'my_household_ids()' 'new_join_code()'; do
+  check "anon は $fn を呼べない" "f" \
+    "$("${PSQL[@]}" -c "select has_function_privilege('anon','public.$fn','execute');" | first)"
+done
+# 逆にこれを取り上げると、ポリシーの using 節ごと落ちる。上と対で押さえておく。
+check "authenticated は my_household_ids を呼べる" "t" \
+  "$("${PSQL[@]}" -c "select has_function_privilege('authenticated','public.my_household_ids()','execute');" | first)"
+
 echo "合い言葉"
 check "違う合い言葉では入れない" "ERROR" \
   "$(as "$A" "select public.join_household('ZZZZZZZZ');" | grep -o ERROR | first)"

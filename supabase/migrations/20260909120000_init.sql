@@ -194,9 +194,19 @@ grant select, delete on public.household_members to authenticated;
 grant select, insert, update on public.profiles to authenticated;
 grant select, insert, update on public.meals to authenticated;
 
+-- 関数の execute は2か所から付く。PostgreSQL が作成時に PUBLIC へ与えるものと、
+-- Supabase が public スキーマの既定権限として anon / authenticated へ与えるもの。
+-- 片方だけ外しても、もう片方で通る。3つまとめて外してから、要るものだけ戻す。
 revoke all on function public.create_household(text), public.join_household(text),
-                     public.my_household_ids(), public.new_join_code() from anon, authenticated;
+                     public.my_household_ids(), public.new_join_code()
+  from public, anon, authenticated;
+
 grant execute on function public.create_household(text), public.join_household(text) to authenticated;
+
+-- my_household_ids だけは戻す。RLS のポリシーの中から呼ぶが、ポリシーの式は
+-- 呼び出した利用者の権限で評価されるので、実行権が無いと絞り込みそのものが
+-- 「permission denied for function」で落ちる。
+grant execute on function public.my_household_ids() to authenticated;
 
 -- ── RLS ───────────────────────────────────────────────────────
 
