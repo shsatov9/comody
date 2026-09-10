@@ -28,7 +28,11 @@ export async function POST(req: NextRequest) {
     const supabase = await supabaseServer();
     // 戻り先を callback に渡す。PKCE の検証子はこの往復のあいだ Cookie に載る。
     const redirect = `${originOf(req)}/auth/callback?next=${encodeURIComponent(next)}`;
-    await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } });
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { emailRedirectTo: redirect } });
+    // 返り値の error を見る。supabase-js は送信の失敗を throw ではなく返り値で
+    // 返すので、catch に任せきりだと「送れていない」がどこにも出ない。画面には
+    // 出さないと決めた以上、ログだけが気付く手段なので、ここで拾い切る。
+    if (error) console.error('マジックリンクの送信に失敗', error.message);
   } catch (err) {
     // 送れなかったことも画面には出さない。ログで気付く。
     console.error('マジックリンクの送信に失敗', err);
