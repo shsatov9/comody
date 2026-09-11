@@ -152,3 +152,21 @@ ul.with-action li { grid-template-columns: 1fr auto auto; }
 
 .code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
         font-size: 18px; letter-spacing: 2px; }
+
+/* ── 献立 ────────────────────────────────────────────────── */
+.plan-day { margin-bottom: 18px; }
+.plan-day h2 > span:first-child { display: flex; align-items: baseline; gap: 8px; }
+/* 今日の枠だけ見つけやすくする。週の真ん中を開いたときに目が迷わないように。 */
+.plan-day.is-today h2 { border-bottom-color: var(--accent); }
+
+/* 食べた行は、消すのではなく落ち着かせる。取り消せることが分かる状態で残す。 */
+li.is-eaten .name, li.is-eaten .kcal { color: var(--muted); }
+li.is-eaten .name { text-decoration: line-through; text-decoration-color: var(--line); }
+
+/* 前夜の準備。これが読まれないと翌日の献立が成立しないので、献立の直下に置く。 */
+.prep { font-size: 12px; color: var(--accent); margin: 6px 0 0; }
+.prep-notice { display: flex; flex-direction: column; gap: 2px; }
+.prep-notice .sub { color: var(--muted); }
+
+.alts { margin-top: 8px; }
+.alts .name { color: var(--muted); }

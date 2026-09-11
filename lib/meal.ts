@@ -148,6 +148,12 @@ export function errorMessage(e: string): string {
     case 'not_deletable': return 'その記録は消せませんでした。';
     case 'storage_failed': return '保存できませんでした。時間をおいて試してください。';
     case 'bad_code': return '合い言葉が違います。';
+    case 'not_in_plan': return 'その献立が見つかりませんでした。';
+    case 'already_eaten': return 'その日はもう記録が起きています。';
+    // 記録は入ったが献立側の印が付かなかった。「食べたのに残っていない」ではない
+    case 'link_failed': return '記録はできましたが、献立の印が付きませんでした。';
+    // 印は外れたが記録が消えていない。押し直しはできる
+    case 'undo_partial': return '献立の印は外しましたが、記録が消えていません。';
     default: return '';
   }
 }
