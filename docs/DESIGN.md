@@ -456,7 +456,8 @@ create table shopping_items (
   name       text not null,
   qty        text not null,             -- '500g' / '1パック'。数値に落とさない
   amount_yen integer,                   -- 2人分・5日ぶんの見込み
-  freeze     boolean not null default false,
+  -- freeze は Postgres の予約語なので使えない
+  to_freeze  boolean not null default false,
   created_at timestamptz not null default now()
 );
 
