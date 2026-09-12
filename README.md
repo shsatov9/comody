@@ -20,7 +20,7 @@
 
 | | |
 |---|---|
-| `/login` | メールにリンクが届く。パスワードは持たない |
+| `/login` | メールアドレスとパスワードで入る |
 | `/onboarding` | 所帯を作るか、相手の合い言葉で入る |
 | `/` | 1日の記録。合計・PFCの熱量比・目標との差。`?day=` で行き来する |
 | `/record` | 食べたものを1件記録する。**料理名だけ必須** |
@@ -28,6 +28,19 @@
 
 設計の全体像は [`docs/DESIGN.md`](docs/DESIGN.md)。Phase 2 以降（チラシの
 読み取り、食材との紐づけ、献立の提案）はそちらにある。
+
+### 入る人を増やす
+
+**登録の画面も、パスワードを再発行する画面も持たない。** 使うのは所帯の2人
+だけなので、3枚作っても一度ずつしか通らない。人を足すのとパスワードを直すのは
+Supabase のダッシュボードの Authentication → Users から行う。
+
+入れるようにした人は、最初の一度だけ `/onboarding` を通る。先に入っている側の
+`/settings` に出ている合い言葉を渡せば、同じ記録を見る側に入る。
+
+忘れたときの道はもう1本ある。Users の一覧からマジックリンクや再設定のメールを
+送ると `/auth/callback` が受ける。ふだんの入口ではないが、ダッシュボードで直に
+書き換える以外の手が無いと詰まる。
 
 ### 所帯という単位
 
@@ -45,12 +58,16 @@ cp .env.example .env.local     # Supabase の URL と anon キーを入れる
 npm run dev
 ```
 
-Supabase 側は、プロジェクトを作って `supabase/migrations/` を流すだけ。
+Supabase 側は、プロジェクトを作って `supabase/migrations/` を流す。
 
 ```sh
 supabase link --project-ref <project-ref>
 supabase db push
 ```
+
+そのうえで Authentication → Providers → **Email** を開き、パスワードでの
+ログインを有効にして、**Allow new users to sign up は切る**。人を足すのは
+ダッシュボードからなので（「入る人を増やす」）、誰でも登録できる口は要らない。
 
 `.env.local` に入れる2つは、どちらもブラウザに出る前提の**公開値**。
 秘密にすることで守るものではない（次の節）。

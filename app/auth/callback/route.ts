@@ -1,8 +1,14 @@
 /**
- * メールのリンクから戻ってくる先。認可コードをセッションに換える。
+ * リンクから戻ってくる先。認可コードをセッションに換える。
  *
- * ここでだけ Cookie にセッションが書かれる。Route Handler の cookies() は
- * 書けるので、@supabase/ssr の setAll がそのまま効く。
+ * ## 常用の入口ではない
+ *
+ * ふだんはメールアドレスとパスワードで入る（/auth/signin）。ここが要るのは、
+ * Supabase のダッシュボードから「マジックリンク」や「パスワード再設定」の
+ * メールを送ったときの受け口として。パスワードを忘れた人を戻す道が、
+ * ダッシュボードで直に書き換える以外にもう1本あるほうが詰まらない。
+ *
+ * Route Handler の cookies() は書けるので、@supabase/ssr の setAll がそのまま効く。
  */
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/supabase/server';
