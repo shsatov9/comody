@@ -48,7 +48,13 @@ export default async function PlanPage({
   if (planErr) console.error('献立の読み出しに失敗', planErr.message);
   const plan = plans?.[0] ?? null;
 
-  const notice = one('ate') ? '記録しました。' : one('undone') ? '取り消しました。' : '';
+  const notice = one('imported')
+    ? '取り込みました。'
+    : one('ate')
+      ? '記録しました。'
+      : one('undone')
+        ? '取り消しました。'
+        : '';
   const failure = errorMessage(one('e'));
 
   if (!plan) {
@@ -59,7 +65,8 @@ export default async function PlanPage({
         {failure && <p className="warn">{failure}</p>}
         <p className="empty">まだ献立がありません。</p>
         <p className="hint">
-          チラシの取り込みができるまでは、献立は手で入れる必要があります。
+          献立を組むのは Claude（<code>.claude/skills/meal-plan</code>）です。出てきた
+          JSON を<Link href="/plan/import">取り込む画面</Link>に貼ってください。
           設計は <code>docs/DESIGN.md</code> の §5 にあります。
         </p>
       </main>
@@ -123,6 +130,10 @@ export default async function PlanPage({
       <p className="hint">
         「食べた」を押すと<Link href="/">その日の記録</Link>に1行入ります。
         栄養値は献立の推定なので、手で入れた記録とは区別して持っています。
+      </p>
+
+      <p className="hint">
+        次の週は<Link href="/plan/import">取り込む画面</Link>から足します。
       </p>
     </main>
   );

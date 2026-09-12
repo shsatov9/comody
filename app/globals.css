@@ -170,3 +170,23 @@ li.is-eaten .name { text-decoration: line-through; text-decoration-color: var(--
 
 .alts { margin-top: 8px; }
 .alts .name { color: var(--muted); }
+
+/* ── 取り込み ────────────────────────────────────────────── */
+/* 貼り付けるのは機械が出した JSON なので、等幅で折り返さずに見せる。 */
+.entry-form textarea {
+  font: inherit; font-size: 13px; width: 100%; padding: 8px 10px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: var(--bg); color: var(--fg); resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* 間違いの一覧。li の grid はここでは邪魔になる。 */
+.warn ul { margin: 6px 0 0; padding-left: 1.25em; }
+.warn li { display: list-item; padding: 2px 0; border-top: none; }
+.warn p { margin: 0; }
+
+.shape {
+  overflow-x: auto; font-size: 11px; line-height: 1.5;
+  background: var(--accent-weak); border-radius: 8px; padding: 10px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
