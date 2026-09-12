@@ -1,7 +1,11 @@
 /**
- * ログイン。メールアドレスを1つ入れるだけ。
+ * ログイン。メールアドレスとパスワード。
  *
- * 送ったあとの画面で「届いていたら」と書くのは、登録の有無を漏らさないため
+ * 登録の口も、パスワードの再発行の口もここには無い。使うのは所帯の2人だけ
+ * なので、増やすのも直すのも Supabase のダッシュボードから行う
+ * （README「入る人を増やす」）。
+ *
+ * 失敗の文言を1つにしてあるのは、登録の有無を漏らさないため
  * （/auth/signin の説明を参照）。
  */
 import { supabaseConfig } from '@/lib/config';
@@ -31,17 +35,16 @@ export default async function LoginPage({
           設定するまでログインできません。
         </p>
       )}
-      {one('sent') && (
-        <p className="notice">
-          メールを送りました。届いていたら、中のリンクを開いてください。
-        </p>
+      {error === 'bad_credentials' && (
+        <p className="warn">メールアドレスかパスワードが違います。</p>
       )}
-      {error === 'bad_email' && <p className="warn">メールアドレスの形が正しくありません。</p>}
-      {error === 'expired' && <p className="warn">リンクの期限が切れています。もう一度送ってください。</p>}
-      {error === 'no_code' && <p className="warn">リンクが正しくありません。もう一度送ってください。</p>}
+      {/* ダッシュボードから送ったリンクで入るときだけ通る道（/auth/callback）。 */}
+      {error === 'expired' && <p className="warn">リンクの期限が切れています。</p>}
+      {error === 'no_code' && <p className="warn">リンクが正しくありません。</p>}
 
       <form method="post" action="/auth/signin" className="entry-form">
         <input type="hidden" name="next" value={next} />
+
         <label htmlFor="email">メールアドレス</label>
         <input
           id="email"
@@ -53,12 +56,26 @@ export default async function LoginPage({
           disabled={!configured}
           placeholder="you@example.com"
         />
+
+        <label htmlFor="password">パスワード</label>
+        <input
+          id="password"
+          name="password"
+          type="password"
+          autoComplete="current-password"
+          required
+          disabled={!configured}
+        />
+
         <button type="submit" disabled={!configured}>
-          リンクを送る
+          入る
         </button>
       </form>
 
-      <p className="hint">パスワードはありません。毎回メールのリンクで入ります。</p>
+      <p className="hint">
+        パスワードを忘れたときは、Supabase のダッシュボードから設定し直します。
+        この画面からは変えられません。
+      </p>
     </main>
   );
 }
