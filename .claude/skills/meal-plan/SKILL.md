@@ -152,7 +152,59 @@ const r = calculateRecipe(rows, 2);   // 2人分 → perServing が1人前
 
 ## 保存する先
 
-DB に入れる段になったら `meal_plans` / `meal_plan_items` /
-`meal_plan_item_ingredients` / `shopping_items`。作る日だけ行を置き、作らない日は
-行を作らない（画面が「作らない日」と出す）。栄養値は**推定として**入れる。
-詳細は `docs/DESIGN.md` §5。
+**JSON を1つ出す。SQL は書かない。** 人がそれを `/plan/import` に貼ると、
+`meal_plans` / `meal_plan_items` / `meal_plan_item_ingredients` / `shopping_items`
+に入る。欄の意味は `docs/DESIGN.md` §5、検めているのは `lib/plan-import.ts`。
+
+```json
+{
+  "shopping_on": "2026-09-13",
+  "starts_on": "2026-09-14",
+  "ends_on": "2026-09-18",
+  "flyer": {
+    "store": "コモディイイダ",
+    "valid_from": "2026-09-12", "valid_to": "2026-09-15",
+    "image_path": "flyers/2026-09-12.webp",
+    "image_sha256": "<画像の SHA-256。shasum -a 256 の 64 桁>",
+    "items": [
+      { "key": "chicken", "name": "若鶏もも肉",
+        "price_yen": 89, "price_tax_in": 96, "unit": "100g当り",
+        "category": "meat", "origin": "国産",
+        "valid_from": "2026-09-13", "valid_to": "2026-09-13",
+        "limit_note": "4枚以上", "confidence": 0.9 }
+    ]
+  },
+  "shopping": [
+    { "key": "chicken", "flyer_item": "chicken", "name": "若鶏もも肉",
+      "qty": "4枚 約1,000g（660g 使用、残りは翌週へ）",
+      "amount_yen": 960, "to_freeze": true }
+  ],
+  "days": [
+    { "day": "2026-09-16",
+      "main": {
+        "title": "鶏もものトマト煮", "cook_minutes": 25,
+        "prep_note": "鶏ももを冷凍庫から冷蔵庫へ移す",
+        "kcal": 638, "protein_g": 32.3, "fat_g": 30.0,
+        "carb_g": 64.5, "salt_g": 1.8,
+        "ingredients": [
+          { "name": "鶏もも肉", "qty": "330g", "is_main": true, "shopping": "chicken" },
+          { "name": "オリーブオイル", "qty": "大さじ1" }
+        ]
+      },
+      "alts": [{ "title": "鶏とトマトのチーズ焼き", "cook_minutes": 25 }] }
+  ]
+}
+```
+
+書くときの決まり。
+
+- **作る日だけ `days` に置く。** 作らない日は行を作らない（画面が「作らない日」と出す）
+- **`key` は取り込むあいだだけの合い札。** 買い物リストから商品を `flyer_item` で、
+  食材から買い物リストを `shopping` で指す。家にある米・調味料は指さなくてよい
+- **栄養値は本命にだけ入れる。** 代替は計算していないので `null` のまま。
+  0 を入れると週の平均が狂う
+- **`confidence` は必ず出す。** 読めなかったものを 1.0 で入れると、当て推量が
+  確かめた値と同じ顔で並ぶ
+- **数は数で書く。** `"89"` ではなく `89`。引用符の付け忘れは弾かれる
+- チラシが取り込み済みなら、`flyer` の代わりに `"flyer_id": "<uuid>"`。
+  同じ画像は二度取り込めない（`image_sha256` で見ている）
